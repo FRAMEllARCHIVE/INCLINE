@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inclination Angle Viewer</title>
+  <style>
+    /* General styles for the app */
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #000;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      overflow: hidden;
+    }
+
+    /* Video background styling */
+    video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+
+    /* Angle display styling */
+    .overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 2rem;
+      color: white;
+      z-index: 2;
+    }
+
+    /* Crosshair styling */
+    .crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+      height: 50px;
+      pointer-events: none; /* Prevent interaction interference */
+    }
+
+    .crosshair::before,
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      background-color: red;
+      z-index: 3;
+    }
+
+    .crosshair::before {
+      top: 50%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      transform: translateY(-50%);
+    }
+
+    .crosshair::after {
+      left: 50%;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      transform: translateX(-50%);
+    }
+  </style>
+</head>
+<body>
+  <!-- Live video feed -->
+  <video id="camera" autoplay muted></video>
+
+  <!-- Angle display -->
+  <div class="overlay">
+    <h1 id="angle">0°</h1>
+  </div>
+
+  <!-- Crosshair overlay -->
+  <div class="crosshair"></div>
+
+  <script>
+    // Start the camera stream
+    async function startCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" }
+        });
+        document.getElementById('camera').srcObject = stream;
+      } catch (error) {
+        handleCameraError(error);
+      }
+    }
+
+    // Handle potential camera errors
+    function handleCameraError(error) {
+      let message;
+      switch (error.name) {
+        case 'NotAllowedError':
+          message = "Camera access is denied. Please enable it in browser settings.";
+          break;
+        case 'NotFoundError':
+          message = "No camera found on this device.";
+          break;
+        default:
+          message = `Error accessing the camera: ${error.message}`;
+      }
+      alert(message);
+    }
+
+    // Calculate and display the vertical angle
+    function calculateAngle(event) {
+      if (event.beta !== null) {
+        const angle = Math.abs(event.beta).toFixed(1);
+        document.getElementById('angle').textContent = `${angle}°`;
+      }
+    }
+
+    // Initialize device orientation listener
+    function initDeviceOrientation() {
+      if ('DeviceOrientationEvent' in window) {
+        window.addEventListener("deviceorientation", calculateAngle, true);
+      } else {
+        alert("Device orientation is not supported on this device.");
+      }
+    }
+
+    // Start the app
+    startCamera();
+    initDeviceOrientation();
+  </script>
+</body>
+</html>
